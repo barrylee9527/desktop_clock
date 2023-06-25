@@ -54,7 +54,7 @@
      </property>
      <property name="styleSheet">
       <string notr="true">#widget{
-	background-color: rgba(13, 13, 13,150);
+	background-color: rgba(13, 13, 13,80);
 	border-radius:8px;
 }</string>
      </property>
@@ -83,8 +83,7 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">
-background-color: none;</string>
+         <string notr="true">background-color: none;</string>
         </property>
         <property name="text">
          <string/>

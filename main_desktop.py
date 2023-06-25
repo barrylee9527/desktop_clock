@@ -6,11 +6,12 @@ from ctypes.wintypes import MSG
 import win32api
 import win32con
 import win32gui
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtGui import QMouseEvent, QFont, QIcon, QCursor, QPainter, QColor
-from PyQt5.QtWidgets import QMenu, QDialog, QColorDialog, QSystemTrayIcon, QAction, QStyle, QApplication, QWidget
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QRect, QPointF, QEvent
+from PyQt5.QtGui import QMouseEvent, QFont, QIcon, QPainter, QColor, QWheelEvent
+from PyQt5.QtWidgets import QMenu, QColorDialog, QSystemTrayIcon, QAction, QStyle, QApplication, QWidget
+from qframelesswindow import FramelessWindow
 
-from PyQt5.QtCore import Qt, QTimer, QPoint, pyqtSignal, QRect, QPointF, QEvent
 from Theme_Setting import Ui_Theme
 from desktop_ui import Ui_Form
 from windows.c_structures import MINMAXINFO, NCCALCSIZE_PARAMS
@@ -55,8 +56,7 @@ class WelcomeForm(QWidget, Ui_Form):
         self.font_size = 80
         self.curIndex = 0
         self.painter = QPainter(self.label)
-        self.painter.setPen(QColor(255, 0, 0))
-        self.font = QFont("楷体", 24, QFont.Bold)
+        self.font = QFont("宋体", 70, QFont.Bold)
         self.painter.setFont(self.font)
         self.charWidth = 14
         self.is_locked = False
@@ -76,14 +76,17 @@ class WelcomeForm(QWidget, Ui_Form):
         # 修复多屏不同 dpi 的显示问题
         self.windowHandle().screenChanged.connect(self.__onScreenChanged)
         self.setAttribute(Qt.WA_Hover, True)
+        self.label.setStyleSheet("color:rgb(169, 183, 198);")
+        # 设置label字体大小随窗口大小变化
         self.installEventFilter(self)
+        self.label.setFont(self.font)
+        self.label.update()
 
     def mouse_menu(self, event):
         self.context_menu.exec_(event.globalPos())
 
     def hide_titlebar(self, event):
         if not self.is_hide:
-            print('safd')
             self.is_hide = True
         else:
             self.is_hide = False
@@ -143,9 +146,8 @@ class WelcomeForm(QWidget, Ui_Form):
     def real_setting(self, opacity, font_size):
         self.font_size = font_size
         if opacity != -1:
-            print("sfd")
             op = QtWidgets.QGraphicsOpacityEffect()
-            # 设置透明度的值，0.0到1.0，最小值0是透明，1是不透明
+            # 设置透明度的值，0.0到1.0，最小值0很透明，1是不透明
             op.setOpacity(opacity / 100)
             self.label.setGraphicsEffect(op)
         if font_size != -1:
@@ -202,7 +204,7 @@ class WelcomeForm(QWidget, Ui_Form):
         else:
             self.widget.show()
             self.widget.setStyleSheet('''#widget{
-            	background-color: rgba(13, 13, 13,150);
+            	background-color: rgba(13, 13, 13,80);
             	border-radius:8px;
             }''')
 
@@ -339,19 +341,17 @@ class WelcomeForm(QWidget, Ui_Form):
         """ 判断窗口是否最大化 """
         # 返回指定窗口的显示状态以及被恢复的、最大化的和最小化的窗口位置，返回值为元组
         windowPlacement = win32gui.GetWindowPlacement(hWnd)
-        font_size = 45 * (self.width() * self.height() / self.current_width) * 1.005
-        print(font_size)
-        if font_size > 500:
-            self.current_width = self.width() * self.height()
-            # font_size = 45 * (self.width() * self.height() / self.current_width) * 1.005
-        else:
-            self.current_width = self.orgin_width
-            self.font = QFont(self.font.family(), font_size)
-            self.label.setFont(self.font)
-            self.label.update()
+
         if not windowPlacement:
             return False
         return windowPlacement[1] == win32con.SW_MAXIMIZE
+
+    def wheelEvent(self, a0: QWheelEvent) -> None:
+        font_size = a0.angleDelta().y() * 0.02 + self.font.pointSize()
+        self.font = QFont(self.font.family(), int(font_size))
+        self.label.setFont(self.font)
+        self.label.update()
+
 
     def __monitorNCCALCSIZE(self, msg: MSG):
         """ 调整窗口大小 """
@@ -362,12 +362,6 @@ class WelcomeForm(QWidget, Ui_Form):
             return
         elif monitor is not None:
             self.__monitorInfo = win32api.GetMonitorInfo(monitor)
-        # 调整窗口大小
-        params = cast(msg.lParam, POINTER(NCCALCSIZE_PARAMS)).contents
-        # params.rgrc[0].left = self.__monitorInfo['Work'][0]
-        # params.rgrc[0].top = self.__monitorInfo['Work'][1]
-        # params.rgrc[0].right = self.__monitorInfo['Work'][2]
-        # params.rgrc[0].bottom = self.__monitorInfo['Work'][3]
 
     def __onScreenChanged(self):
         print("__onScreenChanged")
@@ -398,7 +392,7 @@ class WelcomeForm(QWidget, Ui_Form):
         return QWidget.eventFilter(self, obj, e)
 
 
-class Theme_Setting(QtWidgets.QWidget, Ui_Theme):
+class Theme_Setting(FramelessWindow, Ui_Theme):
     signal = pyqtSignal(int, int)
     signal_color = pyqtSignal(str)
     signal_font = pyqtSignal(str)

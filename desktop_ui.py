@@ -30,7 +30,7 @@ class Ui_Form(object):
         self.widget = QtWidgets.QWidget(Form)
         self.widget.setMaximumSize(QtCore.QSize(2000, 1000))
         self.widget.setStyleSheet("#widget{\n"
-"    background-color: rgba(13, 13, 13,150);\n"
+"    background-color: rgba(13, 13, 13,80);\n"
 "    border-radius:8px;\n"
 "}")
         self.widget.setObjectName("widget")
@@ -43,8 +43,7 @@ class Ui_Form(object):
         font.setFamily("Times New Roman")
         font.setPointSize(48)
         self.label.setFont(font)
-        self.label.setStyleSheet("\n"
-"background-color: none;")
+        self.label.setStyleSheet("background-color: none;")
         self.label.setText("")
         self.label.setScaledContents(True)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
